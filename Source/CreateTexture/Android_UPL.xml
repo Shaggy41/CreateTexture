@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root xmlns:android="http://schemas.android.com/apk/res/android">
+	<init>
+		<log text="Additional java functions"/>
+	</init>
+	
+	<proguardAdditions>
+		<insert>
+		</insert>
+	</proguardAdditions>
+
+	
+	<androidManifestUpdates>
+     <addPermission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+   </androidManifestUpdates>
+	
+	<gameActivityImportAdditions>
+		<insert>
+			<!--
+			Additional imports		
+			-->
+		import android.database.Cursor;
+		import android.net.Uri;
+		import android.provider.MediaStore;
+		</insert>
+	</gameActivityImportAdditions>
+	
+	<gameActivityOnActivityResultAdditions>
+		<insert>
+		if( requestCode == RESULT_LOAD_IMAGE)
+		{
+			if(resultCode == RESULT_OK)
+			{
+				Uri selectedImage = data.getData();
+				String[] filePathColumn = { MediaStore.Images.Media.DATA };
+
+				Cursor cursor = getContentResolver().query(selectedImage,
+						filePathColumn, null, null, null);
+				cursor.moveToFirst();
+
+				int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+				ImagePath = cursor.getString(columnIndex);
+				cursor.close();
+			}
+		}
+		</insert>
+	</gameActivityOnActivityResultAdditions>
+	
+	<gameActivityClassAdditions>
+		<insert>
+		public static final int RESULT_LOAD_IMAGE = 111;
+		
+		public String ImagePath = "None";
+
+		public void AndroidThunkJava_OpenGallery()
+		{
+			 Intent GalleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+			 startActivityForResult(GalleryIntent, RESULT_LOAD_IMAGE);
+		}
+		
+		public String AndroidThunkJava_GetImagePath()
+		{
+			return ImagePath;
+		}
+		
+		public void AndroidThunkJava_CloseApplication()
+		{
+			//moveTaskToBack(true);
+			//android.os.Process.killProcess(android.os.Process.myPid());
+			System.exit(0);
+			finish();
+			
+			/*
+			Intent homeIntent = new Intent(Intent.ACTION_MAIN);
+			homeIntent.addCategory( Intent.CATEGORY_HOME );
+			homeIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+			startActivity(homeIntent);
+			*/
+			
+		}
+		</insert>
+	</gameActivityClassAdditions>
+</root>
