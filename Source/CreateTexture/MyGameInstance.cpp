@@ -22,7 +22,7 @@ UMyGameInstance::UMyGameInstance()
 {
 	RGBFormat = ERGBFormat::BGRA;
 	PixelFormat = EPixelFormat::PF_B8G8R8A8;
-	bCopyPixelFromFile = false;
+	bCustom = false;
 	WidthTex = HeightTex = 64;
 
 #if PLATFORM_WINDOWS
@@ -71,7 +71,20 @@ UTexture2D * UMyGameInstance::LoadImageFromFile(
 		{
 			//-------------------------------------------------------------------
 			// Create empty (white) texture 2D.
-			UTexture2D * LoadedImage = UTexture2D::CreateTransient(WidthTex, HeightTex, PixelFormat);
+			UTexture2D * LoadedImage = nullptr;
+
+			if (bCustom)
+			{
+				LoadedImage = UTexture2D::CreateTransient(
+					WidthTex, HeightTex,
+					PixelFormat);
+			}
+			else
+			{
+				LoadedImage = UTexture2D::CreateTransient(
+					ImageWrapper->GetWidth() , ImageWrapper->GetHeight(),
+					PF_B8G8R8A8);
+			}
 			//-------------------------------------------------------------------
 
 			//-------------------------------------------------------------------
@@ -80,12 +93,8 @@ UTexture2D * UMyGameInstance::LoadImageFromFile(
 			{
 				FByteBulkData * RawData = &LoadedImage->PlatformData->Mips[0].BulkData;
 				uint8 * TextureData = (uint8 *)RawData->Lock(LOCK_READ_WRITE);
-				//const uint8 * UncompressedPtr = UncompressedBGRA->GetData();
 				
-				if (bCopyPixelFromFile)
-				{
-					FMemory::Memcpy(TextureData, UncompressedBGRA->GetData(), FMath::Min<int32>(RawData->GetElementCount(), UncompressedBGRA->Num()));
-				}
+				FMemory::Memcpy(TextureData, UncompressedBGRA->GetData(), FMath::Min<int32>(RawData->GetElementCount(), UncompressedBGRA->Num()));
 
 				RawData->Unlock();
 				Message = "Done :D\n" 
@@ -110,45 +119,6 @@ UTexture2D * UMyGameInstance::LoadImageFromFile(
 	else
 	{
 		Message = "ImageWrapper isn't valid.";
-	}
-
-	return nullptr;
-}
-
-
-//=================================================================
-UTexture2D * UMyGameInstance::CreateTexture()
-{
-	//-------------------------------------------------------------------
-	// Create empty (white) texture 2D.
-	UTexture2D * LoadedImage = UTexture2D::CreateTransient(WidthTex, HeightTex, PixelFormat);
-	//-------------------------------------------------------------------
-
-	//-------------------------------------------------------------------
-	// Fill texture with pixels.
-	if (LoadedImage)
-	{
-		FByteBulkData * RawData = &LoadedImage->PlatformData->Mips[0].BulkData;
-		uint8 * TextureData = (uint8 *)RawData->Lock(LOCK_READ_WRITE);
-		
-		for (int32 i = 0; i < RawData->GetElementCount(); ++i)
-		{
-			*TextureData = (uint8)120;
-			TextureData += RawData->GetElementSize();
-		}
-		
-		Message = "Done :D\n"
-			+ FString::Printf(L"Image in Bytes: %d\n", RawData->GetElementCount())
-			+ FString::Printf(L"uint8 in Bytes: %d", sizeof(uint8));
-		RawData->Unlock();
-		//Update!
-		LoadedImage->UpdateResource();
-
-		return LoadedImage;
-	}
-	else
-	{
-		Message = "New Texture error";
 	}
 
 	return nullptr;
@@ -259,14 +229,6 @@ void UMyGameInstance::FilesBrowser()
 				AbsolutePath = ResultString[0];
 			}
 		}
-		else
-		{
-			UE_LOG(LogTemp, Error, L"incorrect selection.");
-		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, L"Desktop platform isn't valid.");
 	}
 
 	// Open gallery on the Android
